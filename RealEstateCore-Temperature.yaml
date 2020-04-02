@@ -1,0 +1,30 @@
+- alias: RealEstateCore Temperature to MQTT
+  trigger:
+    platform: event
+    event_type: state_changed
+    event_data:
+      domain: sensor
+  condition:
+    condition: template
+    value_template: "{{ trigger.event.data.entity_id.endswith('_temperature') }}"
+  action:
+    service: mqtt.publish
+    data_template:
+      topic: rec/observations
+      payload_template: >-
+        {
+        "@context": {
+        "@vocab": "https://w3id.org/rec/core/",
+        "@base": "https://example.com/",
+        "core": "https://w3id.org/rec/core/",
+        "device": "https://w3id.org/rec/device/"
+        },
+        "@type": "Observation",
+        "device:observationGeneratedBy": {
+        "@id": "{{ trigger.event.data.entity_id }}"
+        },
+        "hasObservationTime": "{{ trigger.event.data.new_state.last_changed }}",
+        "quantityKind": { "@id": "core:Temperature"},
+        "measurementUnit": { "@id": "core:Celsius" },
+        "hasValue": "{{ trigger.event.data.new_state.state }}"
+        }
